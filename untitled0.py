@@ -2,7 +2,7 @@ ROWS=6
 COLUMNS=7
 
    
-numbers_row="  1    2    3    4    5    6    7"
+numbers_row="1 2 3 4 5 6 7"
 game_grid = [
     ['*' for _ in range(COLUMNS)]
     for _ in range(ROWS)
@@ -11,7 +11,7 @@ game_grid = [
 def print_grid():
     print(numbers_row)
     for row in game_grid:
-        print(row)
+        print(' '.join(row))
     
     
 game_mode=int(input("VS Player: 1 or VS Bot: 2 : "))
