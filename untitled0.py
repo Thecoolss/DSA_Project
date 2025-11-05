@@ -88,13 +88,25 @@ if game_mode==1:
         
         if current_player==1:
             game_going=perform_move(player_1)
+            if not game_going:
+                print_grid()
+                print("Player 1 Wins!")
+                break
             current_player=2
         
         else:
              game_going=perform_move(player_2)
-             
+             if not game_going:
+                print_grid()
+                print("Player 2 Wins!")
+                break
              current_player=1
-            
+        
+        if all(h==ROWS for h in heights):
+            print_grid()
+            print("It's a Draw!")
+            break
+
             
             
             
