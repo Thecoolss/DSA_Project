@@ -78,7 +78,38 @@ def perform_move(player):
     move_made=make_move_on_grid(player_pick-1,player)
     #print(move_made)
     return check_game_over(move_made,player)
+
+#Bot Logic: 
+
+# Bot checks for any wins
+def try_move_wins(col,symbol):
+    if heights[col]>= ROWS:
+        return False
+    r,c = make_move_on_grid(col,symbol)
+    win = not check_game_over((r,c),symbol)
+    heights[c] -= 1
+    game_grid[r][c] = '*'
+
+    return win
+
+def bot_move(bot_symb, opp_symb):
+    cols = check_legal_move()
+    if not cols:
+        return None
+    for col in cols:         # to win 
+        if try_move_wins(col,bot_symb):
+            return col 
+    for col in cols:         # to block opponent
+        if try_move_wins(col,opp_symb):
+            return col
     
+    center = [3,2,4,1,5,0,6]  # center-first preference for any other move
+    for col in center:
+        if col in cols:
+            return col 
+    return cols[0]
+    
+
 
 if game_mode==1:
     game_going=True
@@ -102,10 +133,55 @@ if game_mode==1:
                 break
              current_player=1
         
-        if all(h==ROWS for h in heights):
+        draw = True
+        for h in heights:
+            if h != ROWS:
+                draw = False
+                break
+
+        if draw:
             print_grid()
-            print("It's a Draw!")
+            print("It's a draw!")
             break
+
+elif game_mode==2:
+    game_going = True
+    current_player = 1
+    
+    while game_going:
+        print_grid()
+        if current_player==1:
+            game_going=perform_move(player_1)
+            if not game_going:
+                print_grid()
+                print("Player 1 Wins!")
+                break
+            current_player == 2
+        else:
+            col = bot_move(player_2, player_1)
+            if col is None:
+                print_grid()
+                print("It's a Draw!")
+                break
+
+            r,c = make_move_on_grid(col, player_2)
+            if not check_game_over((r,c), player_2):
+                print_grid()
+                print("Bot Wins!")
+                break
+            current_player = 1  
+        
+        draw = True
+        for h in heights:
+            if h != ROWS:
+                draw = False
+                break
+
+        if draw:
+            print_grid()
+            print("It's a draw!")
+            break
+
 
             
             
