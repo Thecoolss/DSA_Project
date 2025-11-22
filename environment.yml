@@ -1,0 +1,6 @@
+name: connect4_game
+channels:
+  - defaults
+dependencies:
+  - python
+  - pip
