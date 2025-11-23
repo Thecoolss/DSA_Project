@@ -1,5 +1,5 @@
 from hfunctions import *
-
+from minimax import minimax
 
 def main_entry():
     rows = 6
@@ -53,7 +53,23 @@ def main_entry():
                     break
                 current_player = 2
             else:
-                col = bot_move(player_2, player_1, heights, game_grid, rows, columns)
+                av_moves = available_moves(heights, rows)
+                if av_moves is None:
+                    print_grid(numbers_row, game_grid)
+                    print("It's a Draw!")
+                    break
+                move_by_minbot=minimax(player_2, player_1, heights, game_grid, rows, columns, True, 4)
+
+                r, c = make_move_on_grid(move_by_minbot, player_2, game_grid, heights, rows)
+                if not check_game_over((r, c), game_grid, rows, columns):
+                    print_grid(numbers_row, game_grid)
+                    print("Bot Wins!")
+                    break
+                current_player = 1
+
+
+
+                """col = bot_move(player_2, player_1, heights, game_grid, rows, columns)
                 if col is None:
                     print_grid(numbers_row, game_grid)
                     print("It's a Draw!")
@@ -69,7 +85,7 @@ def main_entry():
             if all(height == rows for height in heights):
                 print_grid(numbers_row, game_grid)
                 print("It's a draw!")
-                break
+                break"""
 
 
 if __name__ == "__main__":
