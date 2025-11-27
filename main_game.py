@@ -1,5 +1,5 @@
 from hfunctions import *
-from minimax import minimax
+from greedy import minimax
 
 def main_entry():
     rows = 6
@@ -13,25 +13,38 @@ def main_entry():
     player_2 = "O"
     current_player = 1
 
+    # move history stacks for undo/redo
+    move_history = []  # stores tuples (row, col, symbol)
+    redo_stack = []
+
     if game_mode == 1:
         game_going = True
         while game_going:
             print_grid(numbers_row, game_grid)
 
             if current_player == 1:
-                game_going = perform_move(player_1, heights, game_grid, rows, columns)
-                if not game_going:
+                result = perform_move(player_1, heights, game_grid, rows, columns, move_history, redo_stack)
+                if result is None:
+                    # User chose to quit
+                    print("Game aborted by player.")
+                    return
+                if result is False:
                     print_grid(numbers_row, game_grid)
                     print("Player 1 Wins!")
                     break
+                game_going = result
                 current_player = 2
 
             else:
-                game_going = perform_move(player_2, heights, game_grid, rows, columns)
-                if not game_going:
+                result = perform_move(player_2, heights, game_grid, rows, columns, move_history, redo_stack)
+                if result is None:
+                    print("Game aborted by player.")
+                    return
+                if result is False:
                     print_grid(numbers_row, game_grid)
                     print("Player 2 Wins!")
                     break
+                game_going = result
                 current_player = 1
 
             if all(height == rows for height in heights):
@@ -46,46 +59,46 @@ def main_entry():
         while game_going:
             print_grid(numbers_row, game_grid)
             if current_player == 1:
-                game_going = perform_move(player_1, heights, game_grid, rows, columns)
-                if not game_going:
+                result = perform_move(player_1, heights, game_grid, rows, columns, move_history, redo_stack)
+                if result is None:
+                    print("Game aborted by player.")
+                    return
+                if result is False:
                     print_grid(numbers_row, game_grid)
                     print("Player 1 Wins!")
                     break
+                game_going = result
                 current_player = 2
             else:
                 av_moves = available_moves(heights, rows)
-                if av_moves is None:
+                if not av_moves:
                     print_grid(numbers_row, game_grid)
                     print("It's a Draw!")
                     break
-                move_by_minbot=minimax(player_2, player_1, heights, game_grid, rows, columns, True, 4)
 
-                r, c = make_move_on_grid(move_by_minbot, player_2, game_grid, heights, rows)
-                if not check_game_over((r, c), game_grid, rows, columns):
-                    print_grid(numbers_row, game_grid)
-                    print("Bot Wins!")
-                    break
-                current_player = 1
+                # Greedy bot: try immediate win, block opponent, center preference
+                col = bot_move(player_2, player_1, heights, game_grid, rows, columns)
 
+                # Fallback: try minimax if greedy didn't pick (or if more advanced strategy desired)
+                if col is None:
+                    col = minimax(player_2, player_1, heights, game_grid, rows, columns, True, 4)
 
-
-                """col = bot_move(player_2, player_1, heights, game_grid, rows, columns)
                 if col is None:
                     print_grid(numbers_row, game_grid)
                     print("It's a Draw!")
                     break
 
                 r, c = make_move_on_grid(col, player_2, game_grid, heights, rows)
-                if not check_game_over((r, c), game_grid, rows, columns):
+                move_history.append((r, c, player_2))
+                # New bot move invalidates redo stack
+                redo_stack.clear()
+
+                if check_game_over((r, c), game_grid, rows, columns):
                     print_grid(numbers_row, game_grid)
                     print("Bot Wins!")
                     break
                 current_player = 1
 
-            if all(height == rows for height in heights):
-                print_grid(numbers_row, game_grid)
-                print("It's a draw!")
-                break"""
 
 
 if __name__ == "__main__":
