@@ -1,5 +1,6 @@
 from hfunctions import *
-from greedy import minimax
+from greedy import greedy
+from new_try import dfs_beam_bot_move
 
 def main_entry():
     rows = 6
@@ -76,12 +77,18 @@ def main_entry():
                     print("It's a Draw!")
                     break
 
-                # Greedy bot: try immediate win, block opponent, center preference
-                col = bot_move(player_2, player_1, heights, game_grid, rows, columns)
+                # Try quick tactical rules first
+                #col = bot_move(player_2, player_1, heights, game_grid, rows, columns)
 
-                # Fallback: try minimax if greedy didn't pick (or if more advanced strategy desired)
+                # If no tactical move, run DFS+beam search bot (non-minimax)
+                #if col is None:
+                    #print("DFS")
+                col = dfs_beam_bot_move(player_2, player_1, heights, game_grid, rows, columns, depth=4, beam_width=3)
+
+                # Fallback to greedy heuristic scoring
                 if col is None:
-                    col = minimax(player_2, player_1, heights, game_grid, rows, columns, True, 4)
+                    print("Greedy")
+                    col = greedy(player_2, player_1, heights, game_grid, rows, columns)
 
                 if col is None:
                     print_grid(numbers_row, game_grid)
