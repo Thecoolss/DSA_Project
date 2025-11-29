@@ -1,8 +1,11 @@
 import heapq
 from typing import List, Tuple, Optional
 
-from hfunctions import available_moves, make_move_on_grid, check_game_over, try_move_wins
+from hfunctions import available_moves, make_move_on_grid, check_game_over, try_move_wins, bfs_threat_solver
 from greedy import score_move
+
+
+_eval_cache = {}
 
 
 def dfs_beam_bot_move(
@@ -30,6 +33,12 @@ def dfs_beam_bot_move(
 
     def evaluate_board() -> int:
         """Heuristic from the bot's perspective: aggregate strength of both sides."""
+        heights_key = tuple(heights)
+        grid_key = tuple(tuple(row) for row in grid)
+        cache_key = (heights_key, grid_key, rows, columns, player, opponent)
+        if cache_key in _eval_cache:
+            return _eval_cache[cache_key]
+
         total = 0
         for r in range(rows):
             for c in range(columns):
@@ -38,6 +47,14 @@ def dfs_beam_bot_move(
                     total += score_move(player, opponent, grid, (r, c), rows, columns)
                 elif cell == opponent:
                     total -= score_move(opponent, player, grid, (r, c), rows, columns)
+
+        # Threat distances via BFS: closer win for us boosts score; for opponent penalizes.
+        my_dist, opp_dist = bfs_threat_solver(player, opponent, heights, grid, rows, columns, max_depth=4)
+        if my_dist is not None:
+            total += 50000 // (my_dist + 1)
+        if opp_dist is not None:
+            total -= 50000 // (opp_dist + 1)
+        _eval_cache[cache_key] = total
         return total
 
     def ordered_moves(for_player: str, is_max: bool) -> List[Tuple[int, Tuple[int, int]]]:

@@ -213,3 +213,71 @@ def bot_move(bot_symb, opp_symb, heights, game_grid, rows, columns):
         if col in cols:
             return col
     return cols[0]
+
+
+from collections import deque
+
+
+_bfs_cache = {}
+
+
+def bfs_threat_solver(current_player, opponent, heights, game_grid, rows, columns, max_depth=6):
+    """Use BFS to find the minimum number of plies (moves) to reach a win for either side.
+
+    Returns a tuple (current_player_moves, opponent_moves) where each entry is the
+    minimum number of moves from the current state for that side to achieve a win,
+    assuming alternating turns. If no win is found within max_depth, the value is None.
+    """
+
+    heights_key = tuple(heights)
+    grid_key = tuple(tuple(row) for row in game_grid)
+    state_key = (
+        current_player,
+        opponent,
+        heights_key,
+        grid_key,
+        rows,
+        columns,
+        max_depth,
+    )
+    if state_key in _bfs_cache:
+        return _bfs_cache[state_key]
+
+    start_grid = [row[:] for row in game_grid]
+    start_heights = list(heights_key)
+    queue = deque()
+    queue.append((start_grid, start_heights, current_player, 0))
+    seen = set()
+    current_best = None
+    opponent_best = None
+
+    while queue:
+        grid, hs, turn, depth = queue.popleft()
+        if depth >= max_depth:
+            continue
+
+        node_key = (tuple(hs), turn)
+        if node_key in seen:
+            continue
+        seen.add(node_key)
+
+        cols = available_moves(hs, rows)
+        for col in cols:
+            g2 = [row[:] for row in grid]
+            h2 = hs[:]
+            r, c = make_move_on_grid(col, turn, g2, h2, rows)
+            win = check_game_over((r, c), g2, rows, columns)
+            if win:
+                moves_needed = depth + 1
+                if turn == current_player:
+                    if current_best is None or moves_needed < current_best:
+                        current_best = moves_needed
+                else:
+                    if opponent_best is None or moves_needed < opponent_best:
+                        opponent_best = moves_needed
+                continue
+            queue.append((g2, h2, opponent if turn == current_player else current_player, depth + 1))
+
+    result = (current_best, opponent_best)
+    _bfs_cache[state_key] = result
+    return result
