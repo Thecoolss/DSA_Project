@@ -1,5 +1,8 @@
 from hfunctions import *
 def score_direction(move, dire, player, opponent, grid, rows, columns):
+    # Objective: Score a move along one direction considering contiguous bot/opponent pieces.
+    # Explanation: Counts up to three cells forward; uses exponential weighting favoring longer bot chains and penalizing opponent chains.
+    # Complexity: Best O(1); Average O(1); Worst O(1) (fixed 3 steps). Extra space O(1).
     x, y = move
     dx, dy = dire
     player_count = 0
@@ -22,6 +25,9 @@ def score_direction(move, dire, player, opponent, grid, rows, columns):
     return score
 
 def score_move(player, opponent, grid, move, rows, columns):
+    # Objective: Aggregate directional scores for a move and apply a center bonus.
+    # Explanation: Sums score_direction over 8 directions and adds a bonus based on column proximity to center.
+    # Complexity: Best O(1); Average O(1); Worst O(1) (fixed directions/steps). Extra space O(1).
     sum_score=0
     displacements = [
         (1, 0),
@@ -53,6 +59,9 @@ def greedy(player, opponent, heights, grid, rows, columns, *_args, **_kwargs):
 
     Returns a column index to play, or None when no valid move exists.
     """
+    # Objective: Choose a move using immediate tactics then a heuristic without lookahead.
+    # Explanation: Tries instant win, then block, then scores all legal moves with score_move and picks the max via heap.
+    # Complexity: Best O(columns) with early win; Average O(columns); Worst O(columns). Extra space O(columns) for heap.
     cols = available_moves(heights, rows)
     if not cols:
         return None
@@ -67,8 +76,9 @@ def greedy(player, opponent, heights, grid, rows, columns, *_args, **_kwargs):
         if try_move_wins(col, opponent, heights, grid, rows, columns):
             return col
 
-    # 3) score remaining moves and choose best — use insertion sort to order for clarity
-    scored = []  # list of tuples (col, score)
+    # 3) score remaining moves and choose best — use a heap (max-heap via negative scores)
+    import heapq
+    scored = []  # heap of tuples (-score, col)
     for col in cols:
         if heights[col] >= rows:
             continue
@@ -78,21 +88,13 @@ def greedy(player, opponent, heights, grid, rows, columns, *_args, **_kwargs):
         # rollback
         heights[col] -= 1
         grid[r][c] = '*'
-        # insertion sort insert into 'scored' keeping descending order
-        inserted = False
-        for i in range(len(scored)):
-            if s > scored[i][1]:
-                scored.insert(i, (col, s))
-                inserted = True
-                break
-        if not inserted:
-            scored.append((col, s))
+        heapq.heappush(scored, (-s, col))
 
     if not scored:
         return None
 
     # pick the highest scoring column
-    best_col = scored[0][0]
+    _, best_col = heapq.heappop(scored)
     return best_col
             
             

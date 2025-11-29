@@ -1,20 +1,34 @@
+from collections import deque
 
+
+# Objective: Display the board state with column headers.
+# Explanation: Prints the header row and each grid row, spaced for readability.
+# Complexity: Best O(rows*columns); Average O(rows*columns); Worst O(rows*columns). Extra space O(1).
 def print_grid(numbers_row, game_grid):
     print(numbers_row)
     for row in game_grid:
         print(' '.join(row))
 
 
+# Objective: Validate that a chosen column is playable.
+# Explanation: Ensures the column index is in range and the column is not full.
+# Complexity: Best O(1); Average O(1); Worst O(1). Extra space O(1).
 def check_legal_move(pick: int, heights, rows, columns):
     if pick < 0 or pick >= columns:
         return False
     return heights[pick] < rows
 
 
+# Objective: Return all columns that can accept a new piece.
+# Explanation: Scans the heights array and collects indices that are below the row limit.
+# Complexity: Best O(columns); Average O(columns); Worst O(columns). Extra space O(columns) for the result list.
 def available_moves(heights, rows):
     return [idx for idx, height in enumerate(heights) if height < rows]
 
 
+# Objective: Drop a piece into a column and update bookkeeping.
+# Explanation: Finds the next open row from the bottom, writes the symbol, and increments column height.
+# Complexity: Best O(1); Average O(1); Worst O(1). Extra space O(1).
 def make_move_on_grid(pick, symbol, game_grid, heights, rows):
     row_to_fill = rows - heights[pick] - 1
     game_grid[row_to_fill][pick] = symbol
@@ -22,6 +36,9 @@ def make_move_on_grid(pick, symbol, game_grid, heights, rows):
     return row_to_fill, pick
 
 
+# Objective: Verify a straight-line run of matching pieces from a move.
+# Explanation: Steps up to three cells in a direction to confirm all match the origin; stops on mismatch or bounds.
+# Complexity: Best O(1); Average O(1); Worst O(1) (fixed steps). Extra space O(1).
 def check_direction(move, dire, game_grid, rows, columns):
     x, y = move
     dx, dy = dire
@@ -37,11 +54,10 @@ def check_direction(move, dire, game_grid, rows, columns):
 
 
 def check_game_over(move, game_grid, rows, columns):
-    """Return True if the last move created a four-in-a-row (i.e. game over for the mover).
+    """Objective: Determine if the latest move produced a connect-4.
 
-    We check each primary direction by counting consecutive pieces in both the positive
-    and negative directions and summing (including the original move). If any total >= 4,
-    the move caused a win.
+    Explanation: Counts contiguous matching symbols in four primary directions both forward and backward; win when any count reaches 4+.
+    Complexity: Best O(1); Average O(1); Worst O(1) (constant directions/steps). Extra space O(1).
     """
     x, y = move
     directions = [
@@ -76,6 +92,9 @@ def check_game_over(move, game_grid, rows, columns):
     return False
 
 
+# Objective: Handle a player's turn including input, undo/redo, and move placement.
+# Explanation: Processes commands, validates moves, updates histories, and returns game-over/quit status.
+# Complexity: Best O(1); Average O(rows*columns) with typical prompt/print cycles; Worst O(rows*columns) with multiple retries. Extra space O(rows*columns) cumulatively for histories.
 def perform_move(player, heights, game_grid, rows, columns, move_history=None, redo_stack=None):
     if move_history is None:
         move_history = []
@@ -158,6 +177,9 @@ def perform_move(player, heights, game_grid, rows, columns, move_history=None, r
         return not check_game_over((r, c), game_grid, rows, columns)
 
 
+# Objective: Test whether playing in a column yields an immediate win.
+# Explanation: Temporarily place a piece, check for victory, then revert the state.
+# Complexity: Best O(1); Average O(1); Worst O(1). Extra space O(1).
 def try_move_wins(col, symbol, heights, game_grid, rows, columns):
     if heights[col] >= rows:
         return False
@@ -170,7 +192,11 @@ def try_move_wins(col, symbol, heights, game_grid, rows, columns):
 
 
 def undo_move(heights, game_grid, move_history, redo_stack=None):
-    """Undo last move: restores grid and heights; pushes move onto redo_stack if provided."""
+    """Objective: Undo the latest move and optionally store it for redo.
+
+    Explanation: Pops last move, clears the grid cell, adjusts height, and records it in redo_stack when provided.
+    Complexity: Best O(1); Average O(1); Worst O(1). Extra space O(1).
+    """
     if not move_history:
         return False
     r, c, symbol = move_history.pop()
@@ -182,9 +208,10 @@ def undo_move(heights, game_grid, move_history, redo_stack=None):
 
 
 def redo_move(heights, game_grid, move_history, redo_stack, rows):
-    """Redo a move previously undone. Pops from redo_stack and re-applies it.
+    """Objective: Reapply a previously undone move.
 
-    Returns tuple (r, c) of the new move or None if redo_stack empty.
+    Explanation: Pops from redo_stack and uses make_move_on_grid to place it, keeping histories consistent.
+    Complexity: Best O(1); Average O(1); Worst O(1). Extra space O(1).
     """
     if not redo_stack:
         return None
@@ -197,6 +224,9 @@ def redo_move(heights, game_grid, move_history, redo_stack, rows):
     return new_r, new_c
 
 
+# Objective: Provide a quick tactical bot move (win, block, or center preference).
+# Explanation: Checks for immediate wins, then blocks, otherwise favors central columns.
+# Complexity: Best O(1) if early return; Average O(columns); Worst O(columns). Extra space O(1).
 def bot_move(bot_symb, opp_symb, heights, game_grid, rows, columns):
     cols = available_moves(heights, rows)
     if not cols:
@@ -215,18 +245,14 @@ def bot_move(bot_symb, opp_symb, heights, game_grid, rows, columns):
     return cols[0]
 
 
-from collections import deque
-
-
 _bfs_cache = {}
 
 
 def bfs_threat_solver(current_player, opponent, heights, game_grid, rows, columns, max_depth=6):
-    """Use BFS to find the minimum number of plies (moves) to reach a win for either side.
+    """Objective: BFS to find minimum plies to a win for current player and opponent.
 
-    Returns a tuple (current_player_moves, opponent_moves) where each entry is the
-    minimum number of moves from the current state for that side to achieve a win,
-    assuming alternating turns. If no win is found within max_depth, the value is None.
+    Explanation: Explores alternating-turn game states up to max_depth using a queue; memoizes by state to reuse results. Returns (moves_for_current, moves_for_opponent) or None when not reachable.
+    Complexity: Best O(columns) when early win; Average O(columns^depth) within depth; Worst O(columns^depth) within depth. Extra space O(columns^depth) for queue/visited/cache.
     """
 
     heights_key = tuple(heights)

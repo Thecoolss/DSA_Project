@@ -1,6 +1,8 @@
 name: connect4_game
 channels:
+  - conda-forge
   - defaults
 dependencies:
   - python
+  - pygame
   - pip

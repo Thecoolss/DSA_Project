@@ -3,6 +3,9 @@ from greedy import greedy
 from new_try import dfs_beam_bot_move
 
 def main_entry():
+    # Objective: Entry point to run Connect 4 in player-vs-player or player-vs-bot modes.
+    # Explanation: Sets up board state, manages turn loop, handles human input, and routes bot logic (tactics -> DFS beam -> greedy).
+    # Complexity: Per turn O(columns) for move checks; overall O(turns*columns) time; space O(rows*columns) for grid plus histories.
     rows = 6
     columns = 7
     numbers_row = "1 2 3 4 5 6 7"

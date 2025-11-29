@@ -8,6 +8,9 @@ from greedy import score_move
 _eval_cache = {}
 
 
+# Objective: Choose a bot move via DFS with beam pruning and heuristic evaluation.
+# Explanation: Performs depth-limited adversarial search, using ordered candidate moves and cached board scores/threats to select the best opening column.
+# Complexity: Best O(columns) with immediate win/block; Average O((beam_width)^depth * columns); Worst O((beam_width)^depth * columns). Extra space O((beam_width)^depth) plus caches.
 def dfs_beam_bot_move(
     player: str,
     opponent: str,
@@ -31,6 +34,12 @@ def dfs_beam_bot_move(
         grid[r][c] = "*"
         heights[c] -= 1
 
+    # Objective: Score the current board from the bot's perspective with threats.
+    # Explanation: Caches by state; sums piece heuristics and BFS threat distances for both sides.
+    # Complexity: Best/Average/Worst O(rows*columns) per cache miss plus BFS cost; O(1) on cache hit; space for cache proportional to visited states.
+    # Objective: Score the current board from the bot's perspective with threats.
+    # Explanation: Caches by state; sums piece heuristics and BFS threat distances for both sides.
+    # Complexity: Best O(1) on cache hit; Average/Worst O(rows*columns + BFS) per miss (BFS bounded by max_depth). Extra space proportional to cache size.
     def evaluate_board() -> int:
         """Heuristic from the bot's perspective: aggregate strength of both sides."""
         heights_key = tuple(heights)
@@ -57,6 +66,12 @@ def dfs_beam_bot_move(
         _eval_cache[cache_key] = total
         return total
 
+    # Objective: Rank candidate moves for a player and keep the best beam_width options.
+    # Explanation: Scores simulated moves (threat-aware for bot) and returns them ordered via a heap.
+    # Complexity: Best/Average/Worst O(columns) time for scoring each node; O(beam_width) space for heap.
+    # Objective: Rank candidate moves for a player and keep the best beam_width options.
+    # Explanation: Scores simulated moves (threat-aware for bot) and returns them ordered via a heap.
+    # Complexity: Best O(columns) if early win detected; Average/Worst O(columns) per node. Extra space O(beam_width).
     def ordered_moves(for_player: str, is_max: bool) -> List[Tuple[int, Tuple[int, int]]]:
         """Return up to beam_width moves ordered by heuristic score using a heap."""
         cols = available_moves(heights, rows)
@@ -99,6 +114,12 @@ def dfs_beam_bot_move(
         best = heapq.nlargest(len(heap), heap)
         return [(col, (r, c)) for (_, col, r, c) in best]
 
+    # Objective: Depth-limited adversarial DFS using the ordered move beam.
+    # Explanation: Alternates maximizing/minimizing, detects wins, evaluates leaves, and returns heuristic scores.
+    # Complexity: Best O(1) on immediate win; Average/Worst O((beam_width)^(depth)) time; space O(depth) recursion.
+    # Objective: Depth-limited adversarial DFS using the ordered move beam.
+    # Explanation: Alternates maximizing/minimizing, detects wins, evaluates leaves, and returns heuristic scores.
+    # Complexity: Best O(1) on immediate win; Average O((beam_width)^(depth)) nodes; Worst O((beam_width)^(depth)) nodes. Extra space O(depth) recursion.
     def search(is_max: bool, current_depth: int) -> int:
         cols = ordered_moves(player if is_max else opponent, is_max)
         if not cols:
