@@ -11,8 +11,16 @@ def main_entry():
     numbers_row = "1 2 3 4 5 6 7"
     game_grid = [['*' for _ in range(columns)] for _ in range(rows)]
     heights = [0 for _ in range(columns)]
+    user=0
+    while True:
+        user=input("VS Player: 1 or VS Bot: 2 : ")
+        if user.isdigit():
+            user=int(user)
+            if user <= 2:
+                break
+        else: print("Please enter a valid number (1 or 2).")
 
-    game_mode = int(input("VS Player: 1 or VS Bot: 2 : "))
+    game_mode = user
     player_1 = "#"
     player_2 = "O"
     current_player = 1
@@ -108,6 +116,8 @@ def main_entry():
                     print("Bot Wins!")
                     break
                 current_player = 1
+    else:
+        print("Invalid game mode selected.")
 
 
 
